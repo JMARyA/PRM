@@ -56,8 +56,14 @@ func buildApp() {
         let prj = try? JSONSerialization.jsonObject(with: prjdata!, options: []) as! Dictionary<String, Any>
 
         let name = prj!["Name"]!
+        let flags = prj!["flags"] as! [String]
 
-        let output = shell("\(compiler) -o \(dir)/Product/\(name) \(compilerFilesStr)")
+        var flagsstr = ""
+        for x in flags {
+            flagsstr += "-D \(x) "
+        }
+
+        let output = shell("\(compiler) -o \(dir)/Product/\(name) \(flagsstr)\(compilerFilesStr)")
         print(output)
 }
 
@@ -70,7 +76,8 @@ switch args[1] {
         File(ofPath: "\(prdir)/Source").createDirectory()
         File(ofPath: "\(prdir)/Product").createDirectory()
         File(ofPath: "\(prdir)/Source/main.swift").write(content: "print(\"Hello World!\")\n")
-        let projectJSON: [String: Any] = ["Name": name]
+        var projectJSON: [String: Any] = ["Name": name]
+        projectJSON["flags"] = [String]()
         let jsonData = try JSONSerialization.data(withJSONObject: projectJSON, options: JSONSerialization.WritingOptions())
         let jsonString = String(data: jsonData, encoding: String.Encoding.utf8)
         File(ofPath: "\(prdir)/project.json").write(content: jsonString!)
