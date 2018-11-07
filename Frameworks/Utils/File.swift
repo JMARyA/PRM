@@ -75,12 +75,14 @@ class File: CustomStringConvertible, Equatable {
         do { try content.write(toFile: self.path, atomically: true, encoding: String.Encoding.utf8) } catch {}
     }
     
+    #if os(OSX)
     func moveToTrash() -> Bool {
         do{
             try FileManager().trashItem(at: NSURL(string: "file://" + self.path)! as URL, resultingItemURL: nil)
             return true
         }catch{ return false}
     }
+    #endif
     
     func delete() -> Bool{
         do {
