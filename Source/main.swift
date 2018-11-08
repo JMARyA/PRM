@@ -9,13 +9,12 @@ if args.count < 2 {
 
 if File(ofPath: (getHomeDirectory() + "/.config/prmpref.json")).fileExists {} else {
     let prefJSON: [String: Any] = ["Compiler": "/usr/bin/swiftc"]
-    let jsonData = try JSONSerialization.data(withJSONObject: prefJSON, options: JSONSerialization.WritingOptions())
-    let jsonString = String(data: jsonData, encoding: String.Encoding.utf8)
-    File(ofPath: "\(getHomeDirectory())/.config/prmpref.json").write(content: jsonString!)
+    let jsono = JSON(prefJSON)
+    File(ofPath: "\(getHomeDirectory())/.config/prmpref.json").write(content: jsono.description)
 }
 
-let prefData = File(ofPath: "\(getHomeDirectory())/.config/prmpref.json").read().data(using: .utf8)
-let pref = try? JSONSerialization.jsonObject(with: prefData!, options: []) as! Dictionary<String, Any>
+let prefStr = File(ofPath: "\(getHomeDirectory())/.config/prmpref.json").read()
+let pref = JSON(parseJSON: prefStr)
 
 func scanFolder(_ folder: String) -> [String] {
     var files = [String]()
@@ -43,7 +42,7 @@ func scanFolder(_ folder: String) -> [String] {
 }
 
 func buildApp() {
-        let compiler = pref!["Compiler"]!
+        let compiler = pref["Compiler"]
         var compilerFiles = ["\(dir)/Source/main.swift"]
         compilerFiles += scanFolder("\(dir)/Source")
         compilerFiles += scanFolder("\(dir)/Frameworks")
@@ -52,15 +51,15 @@ func buildApp() {
             compilerFilesStr += "\(x) "
         }
 
-        let prjdata = File(ofPath: "\(dir)/project.json").read().data(using: .utf8)
-        let prj = try? JSONSerialization.jsonObject(with: prjdata!, options: []) as! Dictionary<String, Any>
+        let prjstr = File(ofPath: "\(dir)/project.json").read()
+        let prj = JSON(parseJSON: prjstr)
 
-        let name = prj!["Name"]!
-        let flags = prj!["flags"] as! [String]
+        let name = prj["Name"]
+        let flags = prj["flags"]
 
         var flagsstr = ""
         for x in flags {
-            flagsstr += "-D \(x) "
+            flagsstr += "-D \(x.1) "
         }
 
         let output = shell("\(compiler) -o \(dir)/Product/\(name) \(flagsstr)\(compilerFilesStr)")
@@ -78,17 +77,16 @@ switch args[1] {
         File(ofPath: "\(prdir)/Source/main.swift").write(content: "print(\"Hello World!\")\n")
         var projectJSON: [String: Any] = ["Name": name]
         projectJSON["flags"] = [String]()
-        let jsonData = try JSONSerialization.data(withJSONObject: projectJSON, options: JSONSerialization.WritingOptions())
-        let jsonString = String(data: jsonData, encoding: String.Encoding.utf8)
-        File(ofPath: "\(prdir)/project.json").write(content: jsonString!)
+        let jsono = JSON(projectJSON)
+        File(ofPath: "\(prdir)/project.json").write(content: jsono.description)
         print("Created \(name)")
     case "build":
         buildApp()
     case "run":
         buildApp()
-        let prjdata = File(ofPath: "\(dir)/project.json").read().data(using: .utf8)
-        let prj = try? JSONSerialization.jsonObject(with: prjdata!, options: []) as! Dictionary<String, Any>
-        let name = prj!["Name"]!
+        let prjstr = File(ofPath: "\(dir)/project.json").read()
+        let prj = JSON(parseJSON: prjstr)
+        let name = prj["Name"]
         var aargs = args
         aargs.removeFirst()
         aargs.removeFirst()
@@ -101,9 +99,8 @@ switch args[1] {
         
     case "--compiler":
         let prefJSON: [String: Any] = ["Compiler": args[2]]
-        let jsonData = try JSONSerialization.data(withJSONObject: prefJSON, options: JSONSerialization.WritingOptions())
-        let jsonString = String(data: jsonData, encoding: String.Encoding.utf8)
-        File(ofPath: "\(getHomeDirectory())/.config/prmpref.json").write(content: jsonString!)
+        let jsono = JSON(prefJSON)
+        File(ofPath: "\(getHomeDirectory())/.config/prmpref.json").write(content: jsono.description)
 
     case "--help":
         let helptext = """
